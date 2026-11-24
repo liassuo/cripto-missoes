@@ -18,6 +18,13 @@ def dh_pequeno(p, g, a, b):
     print("públicos: p = %d, g = %d" % (p, g))
     print("Alice sorteia a = %d e envia A = %d^%d mod %d = %d" % (a, g, a, p, A))
     print("Bob   sorteia b = %d e envia B = %d^%d mod %d = %d" % (b, g, b, p, B))
+    for nome, publica in (("A", A), ("B", B)):
+        if publica in (1, p - 1):
+            # 1 ou p-1 elevado a qualquer número só dá 1 ou p-1: o segredo seria fácil de adivinhar
+            print("\nchave pública fraca: %s = %d. Com %s = 1 ou %s = p - 1 o segredo combinado" % (nome, publica, nome, nome))
+            print("só pode ser 1 ou %d, e o invasor adivinha sem esforço. Por isso o" % (p - 1))
+            print("programa recusa. Escolha outro g ou outro segredo (ex.: p = 23, g = 5, a = 6, b = 15).")
+            return
     print("Alice calcula B^a = %d^%d mod %d = %d" % (B, a, p, tc.dh_segredo(B, a, p)))
     print("Bob   calcula A^b = %d^%d mod %d = %d" % (A, b, p, tc.dh_segredo(A, b, p)))
     print("o invasor viu p, g, A e B. Com p pequeno ele acha a no braço:")
