@@ -8,6 +8,7 @@ MISSOES = [
     ("Missão 1 - Precisamos de matemática (teoria dos números)", "missao1"),
     ("Missão 2 - A mensagem interceptada (criptografia clássica)", "missao2"),
     ("Missão 3 - Milhares de documentos roubados (criptografia simétrica)", "missao3"),
+    ("Missão 6 - Quem realmente enviou o contrato? (assinatura digital)", "missao6"),
 ]
 
 

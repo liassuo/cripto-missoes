@@ -1,0 +1,81 @@
+import os
+import sys
+MISSAO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, MISSAO)
+sys.path.insert(0, os.path.dirname(MISSAO))
+
+from entrada import ler_int
+from missao1.securedocs_math.primos import eh_primo
+from securedocs_assinatura import rsa, pkcs1
+from securedocs_assinatura.sha256 import sha256
+from securedocs_assinatura.util import para_hex, resumir
+from textos import CONTRATO, CONTRATO_FALSO
+
+
+def pequeno(p, q, e, h):
+    try:
+        chave = rsa.chaves_de_primos(p, q, e)
+    except ValueError as erro:
+        print("  não deu: %s" % erro)
+        return
+    n = chave.n
+    print("p = %d, q = %d, n = %d, phi(n) = %d" % (p, q, n, (p - 1) * (q - 1)))
+    print("e = %d, d = e^-1 mod phi(n) = %d" % (e, chave.d))
+    print("chave pública KU = {%d, %d}   chave privada KR = {%d, %d}" % (e, n, chave.d, n))
+    h %= n
+    s = rsa.operacao_privada(h, chave)
+    print("\nassinar  (com a PRIVADA): s = H^d mod n = %d^%d mod %d = %d" % (h, chave.d, n, s))
+    v = rsa.operacao_publica(s, chave.publica)
+    print("verificar (com a PÚBLICA): s^e mod n = %d^%d mod %d = %d" % (s, e, n, v))
+    print("%d == H(M) = %d ? %s" % (v, h, "OK" if v == h else "FALHOU"))
+
+
+def main():
+    print("=== 3. ASSINATURA COM RSA ===\n")
+    print("é o RSA da cifra ao contrário: a chave PRIVADA assina, a PÚBLICA confere.\n")
+
+    print("exemplo dos slides (p = 7, q = 17, e = 5, d = 77), com H(M) = 19:")
+    pequeno(7, 17, 5, 19)
+
+    print("\ncom chave de verdade (2048 bits, primos pelo Miller-Rabin da Missão 1):")
+    chave = rsa.gerar_chaves(2048)
+    print("  n = %s" % resumir(chave.n))
+    dados = CONTRATO.encode("utf-8")
+    h = sha256(dados)
+    print("  documento -> SHA-256 = %s" % para_hex(h)[:32] + "...")
+    s = rsa.assinar_livro(dados, chave)
+    print("  assinatura = H^d mod n (feita pelo TCR) = %s" % resumir(s))
+    print("  verificar contrato original: %s" % rsa.verificar_livro(dados, s, chave.publica))
+    print("  verificar contrato trocado : %s"
+          % rsa.verificar_livro(CONTRATO_FALSO.encode("utf-8"), s, chave.publica))
+
+    print("\nna prática o hash não vai 'pelado': o PKCS#1 v1.5 completa até o tamanho de n")
+    assinatura = pkcs1.assinar_v15(dados, chave)
+    em = pkcs1.abrir(assinatura, chave.publica)
+    print("  s^e mod n = %s ... %s" % (para_hex(em[:12], 1), para_hex(em[-36:-32], 1)))
+    print("              00 01 FF..FF 00 | DigestInfo (diz que é SHA-256) | hash")
+    print("  verificar: %s" % pkcs1.verificar_v15(dados, assinatura, chave.publica))
+
+    print("\nPSS: enchimento com sal aleatório (recomendado para sistemas novos)")
+    a1 = pkcs1.assinar_pss(dados, chave)
+    a2 = pkcs1.assinar_pss(dados, chave)
+    print("  1a assinatura: %s..." % para_hex(a1[:16]))
+    print("  2a assinatura: %s...  (mesmo contrato, assinatura diferente)" % para_hex(a2[:16]))
+    print("  as duas verificam? %s %s" % (pkcs1.verificar_pss(dados, a1, chave.publica),
+                                          pkcs1.verificar_pss(dados, a2, chave.publica)))
+
+
+def interativo():
+    p = ler_int("primo p: ", 3)
+    q = ler_int("primo q: ", 3)
+    if not (eh_primo(p) and eh_primo(q)):
+        print("  p e q precisam ser primos")
+        return
+    e = ler_int("expoente público e: ", 3)
+    h = ler_int("hash da mensagem H(M) (menor que n): ", 0)
+    print()
+    pequeno(p, q, e, h)
+
+
+if __name__ == "__main__":
+    main()
