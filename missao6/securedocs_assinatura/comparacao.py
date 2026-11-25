@@ -2,16 +2,15 @@ import time
 
 from . import esquemas
 
-# algoritmo, ano, problema difícil, chave para ~128 bits de segurança, tamanho da assinatura
+# algoritmo, ano, problema difícil, chave usada, hash, tamanho da assinatura
 CARACTERISTICAS = [
-    ("RSA (PKCS#1 / PSS)", 1977, "fatoração", "3072 bits", "384 bytes"),
-    ("DSA", 1991, "log discreto em Z_p*", "p 3072 / q 256", "64 bytes"),
-    ("ECDSA", 1999, "log discreto em curva", "256 bits", "64 bytes"),
+    ("RSA", "1977", "fatorar n = p q", "n de 2048 bits", "SHA-256", "256 bytes"),
+    ("DSA (DSS)", "1991", "logaritmo discreto mod p", "p 1024 / q 160 bits", "SHA-1", "40 bytes"),
 ]
 
 
 def medir(nome, repeticoes=5):
-    _, _, gerar, assinar, verificar = esquemas.pegar(nome)
+    _, gerar, assinar, verificar = esquemas.pegar(nome)
     inicio = time.perf_counter()
     privada = gerar()
     t_chave = time.perf_counter() - inicio

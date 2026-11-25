@@ -56,10 +56,11 @@ def main():
     print("\nefeito avalanche:")
     avalanche("contrato de R$ 12.000,00")
 
-    print("\npor que SHA-256 e não SHA-1?")
-    print("  colisão custa ~2^(n/2): SHA-1 -> 2^80, SHA-256 -> 2^128")
-    print("  em 2017 o ataque SHAttered achou uma colisão do SHA-1 com ~2^63 contas:")
-    print("  dois PDFs diferentes com o mesmo SHA-1. Assinar um = assinar o outro.")
+    print("\nresistência à colisão (slide): achar dois textos com o mesmo hash custa ~2^(n/2)")
+    print("  MD5 (128 bits)  -> 2^64   (já considerado fraco nos slides)")
+    print("  SHA-1 (160)     -> 2^80")
+    print("  SHA-256 (256)   -> 2^128  -> é o que usamos no RSA do SecureDocs")
+    print("  se dois contratos tiverem o mesmo hash, assinar um = assinar o outro (demo 6)")
 
 
 def interativo():

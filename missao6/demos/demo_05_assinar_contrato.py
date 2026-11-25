@@ -12,7 +12,7 @@ from securedocs_assinatura.util import para_hex
 from pasta import PASTA, limpar_caminho
 from textos import CONTRATO
 
-ALGORITMO_ESCOLHIDO = "ECDSA-P256-SHA256"
+ALGORITMO_ESCOLHIDO = "RSA-2048-SHA256"
 
 
 def mostrar_arquivo(caminho):
@@ -32,7 +32,7 @@ def mostrar_verificacao(titulo, caminho, sig, pub):
 
 def experimento(original, algoritmo):
     os.makedirs(PASTA, exist_ok=True)
-    _, _, gerar, _, _ = esquemas.pegar(algoritmo)
+    _, gerar, _, _ = esquemas.pegar(algoritmo)
 
     print("1) a TechSecure gera seu par de chaves (%s)" % algoritmo)
     privada = gerar()
@@ -72,14 +72,14 @@ def assinatura_secreta():
     print("\n--- ASSINATURA SECRETA (slide: AES + RSA + hash) ---")
     print("a assinatura sozinha não esconde nada: o contrato vai aberto. Juntando com a Missão 3:")
     dados = CONTRATO.encode("utf-8")
-    privada_ts = esquemas.pegar(ALGORITMO_ESCOLHIDO)[2]()
+    privada_ts = esquemas.pegar(ALGORITMO_ESCOLHIDO)[1]()
     cliente = rsa.gerar_chaves(2048)
     publica_cliente = (cliente.n, cliente.e)
     privada_cliente = (cliente.n, cliente.d)
 
     campos = documento.assinar_dados(dados, "contrato.txt", ALGORITMO_ESCOLHIDO, privada_ts,
                                      "TechSecure - Diretoria")
-    print("  1. hash assinado (ECDSA)                   : %s..." % campos["assinatura"][:32])
+    print("  1. hash assinado (RSA da TechSecure)       : %s..." % campos["assinatura"][:32])
     chave_aes = arquivo.gerar_chave(256)
     cifrado = arquivo.cifrar_dados(dados, chave_aes)
     print("  2. contrato cifrado com AES-256-CBC         : %s..." % para_hex(cifrado[22:38]))
@@ -97,7 +97,7 @@ def assinatura_secreta():
 
 
 def main():
-    print("=== 6. EXPERIMENTO: ASSINAR E VERIFICAR O CONTRATO ===\n")
+    print("=== 5. EXPERIMENTO: ASSINAR E VERIFICAR O CONTRATO ===\n")
     os.makedirs(PASTA, exist_ok=True)
     original = os.path.join(PASTA, "contrato.txt")
     with open(original, "w", encoding="utf-8") as f:

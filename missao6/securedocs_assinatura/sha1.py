@@ -1,8 +1,7 @@
-# SHA-1 (NIST, FIPS 180-1, 1995) - o hash dos slides da disciplina e do DSS original
-# Mesma construção do SHA-256 (Merkle-Damgård), mas com 5 palavras (160 bits)
-# e 80 rodadas. Em 2017 o ataque SHAttered (Google/CWI) produziu dois PDFs
-# diferentes com o mesmo SHA-1: uma assinatura de um vale para o outro.
-# Por isso o SecureDocs usa SHA-256; o SHA-1 fica aqui para comparação.
+# SHA-1 (NIST, FIPS 180-1, 1995) - o hash dos slides da disciplina e do DSS
+# Seguindo os slides: enchimento até L + 1 + k = 448 mod 512, blocos de 512 bits
+# em 16 palavras, valores iniciais H0..H4, funções f(0)..f(79) e constantes
+# K(0)..K(79). Saída de 160 bits. Usado aqui no DSA, como no FIPS 186.
 
 from .sha256 import preencher
 

@@ -1,9 +1,10 @@
-# RSA (Rivest, Shamir e Adleman, 1977) usado para ASSINAR
+# Assinatura com RSA (Rivest, Shamir e Adleman, 1977)
 # Na Missão 3 a chave pública trancava (cifrava) e a privada abria.
 # Na assinatura é o contrário: só o dono da chave PRIVADA consegue produzir
-#   s = m^d mod n
+#   s = H(M)^d mod n
 # e qualquer um confere com a chave PÚBLICA:
-#   s^e mod n == m ?
+#   s^e mod n == H(M) ?
+# Como no slide da aula: Mensagem -> hash -> RSA com a chave privada do emissor.
 # Toda a matemática vem da Missão 1: primos (Miller-Rabin), inverso (Euclides
 # estendido), exponenciação modular e Teorema Chinês do Resto.
 
@@ -27,9 +28,6 @@ class ChavePublica:
     @property
     def bits(self):
         return self.n.bit_length()
-
-    def __eq__(self, outra):
-        return isinstance(outra, ChavePublica) and (self.n, self.e) == (outra.n, outra.e)
 
 
 class ChavePrivada:
@@ -83,25 +81,30 @@ def operacao_publica(s, publica):
     return exp_mod(s, publica.e, publica.n)
 
 
-# ---------------------------------------------------------------- RSA "de livro"
-# Documento -> Hash -> assinatura com a chave privada, sem enchimento nenhum.
-# Funciona, mas é maleável (ver ataques.py): na prática se usa PKCS#1 (pkcs1.py).
-
 def hash_como_numero(dados, n):
     return bytes_para_int(sha256(dados)) % n
 
 
-def assinar_livro(dados, privada):
+def assinar(dados, privada):
+    """Documento -> SHA-256 -> H^d mod n. Devolve a assinatura como número."""
     return operacao_privada(hash_como_numero(dados, privada.n), privada)
 
 
-def verificar_livro(dados, assinatura, publica):
+def verificar(dados, assinatura, publica):
     if not 0 < assinatura < publica.n:
         return False
     return operacao_publica(assinatura, publica) == hash_como_numero(dados, publica.n)
 
 
-# ---------------------------------------------------------------- texto das chaves
+# ---------------------------------------------------------------- bytes e texto
+
+def assinatura_para_bytes(s, chave):
+    return int_para_bytes(s, tamanho_bytes(chave.n))
+
+
+def assinatura_de_bytes(dados):
+    return bytes_para_int(dados)
+
 
 def publica_para_dict(publica):
     return {"n": "%X" % publica.n, "e": "%X" % publica.e}
@@ -118,9 +121,3 @@ def privada_para_dict(privada):
 
 def privada_de_dict(campos):
     return ChavePrivada(*(int(campos[c], 16) for c in ("n", "e", "d", "p", "q")))
-
-
-def tamanho_assinatura(publica):
-    return tamanho_bytes(publica.n)
-
-

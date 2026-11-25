@@ -6,7 +6,7 @@ sys.path.insert(0, os.path.dirname(MISSAO))
 
 from entrada import ler_int
 from missao1.securedocs_math.primos import eh_primo
-from securedocs_assinatura import rsa, pkcs1
+from securedocs_assinatura import rsa
 from securedocs_assinatura.sha256 import sha256
 from securedocs_assinatura.util import para_hex, resumir
 from textos import CONTRATO, CONTRATO_FALSO
@@ -42,27 +42,16 @@ def main():
     print("  n = %s" % resumir(chave.n))
     dados = CONTRATO.encode("utf-8")
     h = sha256(dados)
-    print("  documento -> SHA-256 = %s" % para_hex(h)[:32] + "...")
-    s = rsa.assinar_livro(dados, chave)
+    print("  documento -> SHA-256 = %s..." % para_hex(h)[:32])
+    s = rsa.assinar(dados, chave)
     print("  assinatura = H^d mod n (feita pelo TCR) = %s" % resumir(s))
-    print("  verificar contrato original: %s" % rsa.verificar_livro(dados, s, chave.publica))
+    print("  verificar contrato original: %s" % rsa.verificar(dados, s, chave.publica))
     print("  verificar contrato trocado : %s"
-          % rsa.verificar_livro(CONTRATO_FALSO.encode("utf-8"), s, chave.publica))
-
-    print("\nna prática o hash não vai 'pelado': o PKCS#1 v1.5 completa até o tamanho de n")
-    assinatura = pkcs1.assinar_v15(dados, chave)
-    em = pkcs1.abrir(assinatura, chave.publica)
-    print("  s^e mod n = %s ... %s" % (para_hex(em[:12], 1), para_hex(em[-36:-32], 1)))
-    print("              00 01 FF..FF 00 | DigestInfo (diz que é SHA-256) | hash")
-    print("  verificar: %s" % pkcs1.verificar_v15(dados, assinatura, chave.publica))
-
-    print("\nPSS: enchimento com sal aleatório (recomendado para sistemas novos)")
-    a1 = pkcs1.assinar_pss(dados, chave)
-    a2 = pkcs1.assinar_pss(dados, chave)
-    print("  1a assinatura: %s..." % para_hex(a1[:16]))
-    print("  2a assinatura: %s...  (mesmo contrato, assinatura diferente)" % para_hex(a2[:16]))
-    print("  as duas verificam? %s %s" % (pkcs1.verificar_pss(dados, a1, chave.publica),
-                                          pkcs1.verificar_pss(dados, a2, chave.publica)))
+          % rsa.verificar(CONTRATO_FALSO.encode("utf-8"), s, chave.publica))
+    print("\npor que assinar o hash e não o documento?")
+    print("  o documento tem %d bytes e o hash só 32; a conta com d (2048 bits) é cara,"
+          % len(dados))
+    print("  então assina-se uma vez só, o hash (slide: \"a codificação é feita sobre o hash\").")
 
 
 def interativo():

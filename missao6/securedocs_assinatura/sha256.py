@@ -1,5 +1,5 @@
-# SHA-256 (NIST, FIPS 180-4)
-# Construção de Merkle-Damgård: a mensagem é completada até um múltiplo de 512 bits
+# SHA-256 (NIST, FIPS 180-2, 2002) - da mesma família do SHA-1 dos slides
+# A mensagem é completada até um múltiplo de 512 bits (igual ao SHA-1)
 # e processada bloco a bloco. Cada bloco passa por 64 rodadas de uma função de
 # compressão que mistura 8 palavras de 32 bits (a..h) usando só soma mod 2^32,
 # xor, and, not e rotação. A saída é o estado final: 8 x 32 = 256 bits.
@@ -29,7 +29,7 @@ def raiz_inteira(x, k):
         r = novo
 
 
-# As constantes não são "números mágicos" (nothing-up-my-sleeve): são os 32 primeiros
+# As constantes não são números escolhidos à mão: são os 32 primeiros
 # bits da parte fracionária das raízes quadradas dos 8 primeiros primos (estado
 # inicial) e das raízes cúbicas dos 64 primeiros primos (constantes de rodada).
 #   raiz(p * 2^64) = raiz(p) * 2^32 -> os 32 bits de baixo são a parte fracionária
@@ -69,7 +69,7 @@ def sigma1(x):
 
 def preencher(dados):
     # acrescenta o bit 1, zeros até sobrar 64 bits no bloco e o tamanho original em bits.
-    # Gravar o tamanho no fim (fortalecimento de Merkle-Damgård) impede que duas
+    # Gravar o tamanho no fim impede que duas
     # mensagens de tamanhos diferentes fiquem iguais depois do enchimento.
     tamanho_bits = 8 * len(dados)
     dados = dados + b"\x80"
@@ -94,7 +94,7 @@ def comprimir(estado, bloco, passos=None):
         h, g, f, e, d, c, b, a = g, f, e, (d + t1) & MASCARA, c, b, a, (t1 + t2) & MASCARA
         if passos is not None:
             passos.append((t, w[t], (a, b, c, d, e, f, g, h)))
-    # soma com o estado de entrada (Davies-Meyer): a compressão não pode ser invertida
+    # soma com o estado de entrada: assim a compressão não pode ser desfeita
     return [(x + y) & MASCARA for x, y in zip(estado, (a, b, c, d, e, f, g, h))]
 
 

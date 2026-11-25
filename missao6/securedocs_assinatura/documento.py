@@ -37,7 +37,7 @@ def gravar_campos(caminho, cabecalho, campos):
 # ---------------------------------------------------------------- chaves
 
 def salvar_chaves(pasta, dono, algoritmo, privada):
-    _, modulo, _, _, _ = esquemas.pegar(algoritmo)
+    modulo, _, _, _ = esquemas.pegar(algoritmo)
     nome = dono.lower().replace(" ", "_")
     caminho_pub = os.path.join(pasta, nome + ".pub")
     caminho_key = os.path.join(pasta, nome + ".key")
@@ -52,13 +52,13 @@ def salvar_chaves(pasta, dono, algoritmo, privada):
 
 def ler_publica(caminho):
     campos = ler_campos(caminho)
-    _, modulo, _, _, _ = esquemas.pegar(campos["algoritmo"])
+    modulo, _, _, _ = esquemas.pegar(campos["algoritmo"])
     return campos["algoritmo"], campos.get("dono", "?"), modulo.publica_de_dict(campos)
 
 
 def ler_privada(caminho):
     campos = ler_campos(caminho)
-    _, modulo, _, _, _ = esquemas.pegar(campos["algoritmo"])
+    modulo, _, _, _ = esquemas.pegar(campos["algoritmo"])
     return campos["algoritmo"], campos.get("dono", "?"), modulo.privada_de_dict(campos)
 
 
@@ -74,7 +74,7 @@ def mensagem_assinada(hash_documento, algoritmo, assinante, data):
 def assinar_dados(dados, nome_documento, algoritmo, privada, assinante, data=None):
     if data is None:
         data = time.strftime("%Y-%m-%d %H:%M:%S")
-    _, _, _, assinar, _ = esquemas.pegar(algoritmo)
+    _, _, assinar, _ = esquemas.pegar(algoritmo)
     h = sha256(dados)
     assinatura = assinar(mensagem_assinada(h, algoritmo, assinante, data), privada)
     return {
@@ -103,7 +103,7 @@ def verificar_dados(dados, campos, algoritmo_chave, publica):
     else:
         mensagens.append("integridade: FALHOU - o documento não é o mesmo que foi assinado")
 
-    _, _, _, _, verificar = esquemas.pegar(algoritmo)
+    _, _, _, verificar = esquemas.pegar(algoritmo)
     try:
         assinatura = bytes.fromhex(campos.get("assinatura", ""))
     except ValueError:

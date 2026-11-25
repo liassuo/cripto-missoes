@@ -19,27 +19,9 @@ def para_hex(dados, grupo=0):
     return " ".join(texto[i:i + 2 * grupo] for i in range(0, len(texto), 2 * grupo))
 
 
-def de_hex(texto):
-    return bytes.fromhex("".join(texto.split()))
-
-
 def resumir(x, n=16):
     # número grande na tela: só o começo e o tamanho
     texto = "%X" % x
     if len(texto) <= 2 * n:
         return texto
     return "%s... (%d bits)" % (texto[:n], x.bit_length())
-
-
-def xor_bytes(a, b):
-    return bytes(x ^ y for x, y in zip(a, b))
-
-
-def iguais(a, b):
-    # comparação que não para no primeiro byte diferente (não vaza tempo)
-    if len(a) != len(b):
-        return False
-    diferenca = 0
-    for x, y in zip(a, b):
-        diferenca |= x ^ y
-    return diferenca == 0

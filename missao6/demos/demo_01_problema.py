@@ -5,10 +5,19 @@ sys.path.insert(0, MISSAO)
 sys.path.insert(0, os.path.dirname(MISSAO))
 
 from entrada import ler_texto
-from securedocs_assinatura import ecdsa
-from securedocs_assinatura.hmac import hmac_sha256, verificar_hmac
+from missao3.securedocs_simetrica import arquivo
+from securedocs_assinatura import rsa
 from securedocs_assinatura.sha256 import sha256_hex
 from textos import CONTRATO, CONTRATO_FALSO
+
+CHAVE_RSA = []
+
+
+def chave_techsecure():
+    # gerar RSA de 2048 bits leva um tempinho: gera uma vez
+    if not CHAVE_RSA:
+        CHAVE_RSA.append(rsa.gerar_chaves(2048))
+    return CHAVE_RSA[0]
 
 
 def mostrar(original, falso):
@@ -22,26 +31,25 @@ def mostrar(original, falso):
     print("-> o hash é público, qualquer um calcula. Ele pega erro de transmissão,")
     print("   mas não diz QUEM mandou.\n")
 
-    print("--- tentativa 2: HMAC com uma chave que só TechSecure e cliente conhecem ---")
-    chave = b"chave-combinada-entre-os-dois"
-    etiqueta = hmac_sha256(chave, original)
-    print("TechSecure envia: contrato + HMAC = %s..." % etiqueta.hex().upper()[:32])
-    print("Eva troca o contrato, mas não tem a chave: HMAC confere? %s"
-          % verificar_hmac(chave, falso, etiqueta))
-    etiqueta_cliente = hmac_sha256(chave, falso)
-    print("só que o CLIENTE também tem a chave. Ele pode criar o contrato falso, gerar")
-    print("o HMAC (%s...) e dizer no tribunal que veio da TechSecure." % etiqueta_cliente.hex().upper()[:16])
-    print("HMAC confere? %s -> não dá para provar quem gerou: SEM não repúdio.\n"
-          % verificar_hmac(chave, falso, etiqueta_cliente))
+    print("--- tentativa 2: cifrar com AES e uma chave que só os dois conhecem (Missão 3) ---")
+    chave = arquivo.gerar_chave(256)
+    cifrado = arquivo.cifrar_dados(original.encode("utf-8"), chave)
+    print("TechSecure envia o contrato cifrado: %s..." % cifrado[22:38].hex().upper())
+    print("Eva não tem a chave: não lê e não consegue montar um cifrado válido.")
+    falso_cliente = arquivo.cifrar_dados(falso.encode("utf-8"), chave)
+    print("só que o CLIENTE também tem a chave. Ele cifra o contrato falso")
+    print("(%s...) e diz que recebeu assim da TechSecure." % falso_cliente[22:38].hex().upper())
+    print("-> com chave simétrica os dois podem ter gerado: SEM não repúdio")
+    print("   (slide: a criptografia simétrica \"não oferece assinatura digital\").\n")
 
     print("--- tentativa 3: assinatura digital (chave privada só da TechSecure) ---")
-    privada = ecdsa.gerar_chaves()
-    assinatura = ecdsa.assinar(original.encode("utf-8"), privada)
-    print("TechSecure: contrato -> hash -> assinatura com a chave PRIVADA")
-    print("  assinatura (r, s) = (%X..., %X...)" % (assinatura[0] >> 192, assinatura[1] >> 192))
+    privada = chave_techsecure()
+    s = rsa.assinar(original.encode("utf-8"), privada)
+    print("TechSecure: contrato -> SHA-256 -> RSA com a chave PRIVADA")
+    print("  assinatura = %X..." % (s >> (s.bit_length() - 64)))
     print("cliente confere com a chave PÚBLICA da TechSecure:")
-    print("  contrato original : %s" % ecdsa.verificar(original.encode("utf-8"), assinatura, privada.publica))
-    print("  contrato trocado  : %s" % ecdsa.verificar(falso.encode("utf-8"), assinatura, privada.publica))
+    print("  contrato original : %s" % rsa.verificar(original.encode("utf-8"), s, privada.publica))
+    print("  contrato trocado  : %s" % rsa.verificar(falso.encode("utf-8"), s, privada.publica))
     print("o cliente não tem a chave privada, então não consegue fabricar uma assinatura")
     print("da TechSecure. Se a assinatura confere, só a TechSecure pode ter assinado -> não repúdio.")
 
@@ -51,10 +59,10 @@ def main():
     mostrar(CONTRATO, CONTRATO_FALSO)
     print()
     print("resumo:")
-    print("%-22s %-12s %-14s %-12s" % ("", "integridade", "autenticidade", "não repúdio"))
-    print("%-22s %-12s %-14s %-12s" % ("hash sozinho", "acidental", "não", "não"))
-    print("%-22s %-12s %-14s %-12s" % ("HMAC (chave secreta)", "sim", "sim (entre 2)", "não"))
-    print("%-22s %-12s %-14s %-12s" % ("assinatura digital", "sim", "sim", "sim"))
+    print("%-26s %-12s %-14s %-12s" % ("", "integridade", "autenticidade", "não repúdio"))
+    print("%-26s %-12s %-14s %-12s" % ("hash sozinho", "acidental", "não", "não"))
+    print("%-26s %-12s %-14s %-12s" % ("AES com chave dos dois", "sim", "entre os 2", "não"))
+    print("%-26s %-12s %-14s %-12s" % ("assinatura digital", "sim", "sim", "sim"))
 
 
 def interativo():

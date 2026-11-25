@@ -53,8 +53,7 @@ def main():
     print("exemplo resolvido em aula: p = 59, q = 29, g = 3, x = 7, k = 10, H(M) = 26\n")
     passo_a_passo(59, 29, 3, 7, 10, 26)
 
-    print("\ncom parâmetros de verdade (FIPS 186-4: p de 2048 bits, q de 256, SHA-256)")
-    print("(nos slides: p de 512 a 1024 bits, q de 160 e SHA-1 - foi atualizado pelo NIST)")
+    print("\ncom os tamanhos do slide (p de 1024 bits, q de 160 bits, H = SHA-1):")
     par = dsa.parametros_padrao()
     print("  p = %s" % resumir(par.p))
     print("  q = %s" % resumir(par.q))
@@ -64,12 +63,12 @@ def main():
     r, s = dsa.assinar(dados, chave)
     print("  r = %s" % resumir(r))
     print("  s = %s" % resumir(s))
-    print("  assinatura: 2 x 256 bits = 64 bytes (o RSA de 2048 bits dá 256)")
+    print("  assinatura: r e s de 160 bits = 40 bytes (o RSA de 2048 bits dá 256)")
     print("  verificar original: %s" % dsa.verificar(dados, (r, s), chave.publica))
     print("  verificar trocado : %s" % dsa.verificar(CONTRATO_FALSO.encode("utf-8"), (r, s),
                                                     chave.publica))
-    print("\nobs.: o k aqui sai da RFC 6979 (HMAC da chave com o hash), não do sorteio.")
-    print("se k repetir, a chave privada vaza (demo 7).")
+    print("\nobs.: o k é sorteado de novo a cada mensagem, como diz o slide.")
+    print("se o mesmo k for usado duas vezes, a chave privada vaza (demo 6).")
 
 
 def interativo():
@@ -78,12 +77,12 @@ def interativo():
     if not (eh_primo(p) and eh_primo(q)) or (p - 1) % q:
         print("  p e q precisam ser primos e q precisa dividir p - 1")
         return
-    h = ler_int("h para calcular g = h^((p-1)/q) mod p: ", 2, p - 2)
-    g = exp_mod(h, (p - 1) // q, p)
-    if g == 1:
-        print("  deu g = 1, escolha outro h")
+    g = ler_int("g (no exemplo da aula, 3): ", 2, p - 1)
+    if exp_mod(g, q, p) != 1:
+        # g precisa ser da forma h^((p-1)/q) mod p, ou seja, g^q mod p = 1
+        print("  g = %d não serve: %d^%d mod %d = %d (precisa dar 1)" % (g, g, q, p, exp_mod(g, q, p)))
+        print("  valores que servem: %s" % [h for h in range(2, p) if exp_mod(h, q, p) == 1][:10])
         return
-    print("  g = %d" % g)
     x = ler_int("chave privada x (0 < x < q): ", 1, q - 1)
     k = ler_int("k secreto (0 < k < q): ", 1, q - 1)
     hm = ler_int("H(M): ", 0)

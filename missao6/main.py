@@ -8,34 +8,27 @@ import demo_01_problema
 import demo_02_hash
 import demo_03_rsa
 import demo_04_dsa
-import demo_05_ecdsa
-import demo_06_assinar_contrato
-import demo_07_ataques
-import demo_08_comparacao
-import demo_09_certificado
+import demo_05_assinar_contrato
+import demo_06_ataques
+import demo_07_comparacao
 
 PROBLEMA = [
-    ("O hash está certo, mas quem enviou? (hash x HMAC x assinatura)", demo_01_problema),
+    ("O hash está certo, mas quem enviou? (hash x AES x assinatura)", demo_01_problema),
 ]
 
 ALGORITMOS_ASSINATURA = [
     ("Função hash: SHA-1 x SHA-256", demo_02_hash),
-    ("Assinatura RSA (de livro, PKCS#1 v1.5 e PSS)", demo_03_rsa),
-    ("DSA - Digital Signature Algorithm", demo_04_dsa),
-    ("ECDSA - curvas elípticas", demo_05_ecdsa),
+    ("Assinatura com RSA", demo_03_rsa),
+    ("DSA - Digital Signature Algorithm (DSS)", demo_04_dsa),
 ]
 
 EXPERIMENTO = [
-    ("Assinar e verificar o contrato (arquivo)", demo_06_assinar_contrato),
-    ("Atacando as assinaturas", demo_07_ataques),
-    ("Comparação e a escolha", demo_08_comparacao),
+    ("Assinar e verificar o contrato (arquivo)", demo_05_assinar_contrato),
+    ("Atacando as assinaturas", demo_06_ataques),
+    ("Comparação e a escolha", demo_07_comparacao),
 ]
 
-DESCOBERTA = [
-    ("A chave pública é mesmo da TechSecure? (certificado)", demo_09_certificado),
-]
-
-ALGORITMOS = PROBLEMA + ALGORITMOS_ASSINATURA + EXPERIMENTO + DESCOBERTA
+ALGORITMOS = PROBLEMA + ALGORITMOS_ASSINATURA + EXPERIMENTO
 
 
 def mostrar_menu():
@@ -45,7 +38,7 @@ def mostrar_menu():
     print("=" * 58)
     i = 1
     for titulo, grupo in (("O PROBLEMA", PROBLEMA), ("A SOLUÇÃO: assinatura digital", ALGORITMOS_ASSINATURA),
-                          ("O EXPERIMENTO E A ESCOLHA", EXPERIMENTO), ("NOVA DESCOBERTA", DESCOBERTA)):
+                          ("O EXPERIMENTO E A ESCOLHA", EXPERIMENTO)):
         print("\n " + titulo)
         for nome, _ in grupo:
             print(" %2d - %s" % (i, nome))

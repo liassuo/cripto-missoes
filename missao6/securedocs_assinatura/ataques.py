@@ -9,9 +9,9 @@ from .sha256 import sha256
 
 
 # ---------------------------------------------------------------- RSA sem hash
-# Se o RSA assinar a mensagem direto (s = m^d), sem hash e sem enchimento:
+# Se o RSA assinar a mensagem direto (s = m^d), sem passar pelo hash:
 
-def rsa_falsificacao_existencial(publica):
+def rsa_falsificacao(publica):
     # escolhe a "assinatura" primeiro e calcula a mensagem que ela assina.
     # A mensagem sai aleatória (lixo), mas o par (m, s) é válido sem a chave privada.
     s = secrets.randbelow(publica.n - 2) + 2
@@ -24,29 +24,27 @@ def rsa_multiplicativa(s1, s2, publica):
     return s1 * s2 % publica.n
 
 
-# ---------------------------------------------------------------- k repetido
-# DSA / ECDSA: s = k^-1 (z + x r) mod q. Se duas mensagens usam o MESMO k,
-# r sai igual e dá para isolar k e depois x:
-#   s1 - s2 = k^-1 (z1 - z2)   ->   k = (z1 - z2) / (s1 - s2)
-#   x = (s1 k - z1) / r
-# Foi assim que a chave de assinatura do PlayStation 3 vazou em 2010
-# (a Sony usava sempre o mesmo k).
+# ---------------------------------------------------------------- k repetido no DSA
+# s = k^-1 (H + x r) mod q. O slide diz que k é um número secreto POR MENSAGEM.
+# Se duas mensagens usam o MESMO k, r sai igual e dá para isolar k e depois x:
+#   s1 - s2 = k^-1 (H1 - H2)   ->   k = (H1 - H2) / (s1 - s2)
+#   x = (s1 k - H1) / r                                  (tudo mod q)
 
-def recuperar_chave_k_repetido(z1, assinatura1, z2, assinatura2, q):
+def recuperar_chave_k_repetido(h1, assinatura1, h2, assinatura2, q):
     r1, s1 = assinatura1
     r2, s2 = assinatura2
     if r1 != r2:
         raise ValueError("r diferente: o k não foi repetido")
-    k = (z1 - z2) * inverso_multiplicativo(s1 - s2, q) % q
-    x = (s1 * k - z1) * inverso_multiplicativo(r1, q) % q
+    k = (h1 - h2) * inverso_multiplicativo(s1 - s2, q) % q
+    x = (s1 * k - h1) * inverso_multiplicativo(r1, q) % q
     return k, x
 
 
 # ---------------------------------------------------------------- colisão de hash
 # A assinatura é feita sobre o HASH. Se o atacante achar dois contratos com o
-# mesmo hash, a assinatura de um vale para o outro. Com o SHA-256 inteiro isso
-# custa 2^128 tentativas (paradoxo do aniversário); aqui o hash é cortado em
-# poucos bits só para mostrar que, com hash fraco, o ataque funciona.
+# mesmo hash, a assinatura de um vale para o outro. Pelo slide, achar uma colisão
+# custa 2^(n/2): com o SHA-256 inteiro, 2^128. Aqui o hash é cortado em poucos
+# bits só para mostrar que, com hash fraco, o ataque funciona.
 
 def variantes(texto, quantas_posicoes):
     # cada espaço pode virar dois espaços: 2^n versões com o mesmo sentido
